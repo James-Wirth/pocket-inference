@@ -1,4 +1,6 @@
 pub mod dense;
+pub mod flatten;
+pub mod dropout;
 
 use crate::{Result, Tensor};
 
@@ -9,5 +11,6 @@ pub trait Layer: std::fmt::Debug + Send + Sync {
 }
 
 pub use dense::Dense;
-
+pub use flatten::Flatten;
+pub use dropout::Dropout;
 
