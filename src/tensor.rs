@@ -10,10 +10,10 @@ impl Tensor {
         Self { data }
     }
 
-    pub fn from_vec(vec: Vec<f32>, shape: &[usize]) -> Self {
+    pub fn from_vec(vec: Vec<f32>, shape: &[usize]) -> crate::Result<Self> {
         let data = Array::from_shape_vec(IxDyn(shape), vec)
-            .expect("Shape and vector length must match");
-        Self { data }
+            .map_err(|e| crate::Error::Layer(format!("Shape and vector length must match: {}", e)))?;
+        Ok(Self { data })
     }
 
     pub fn shape(&self) -> &[usize] {

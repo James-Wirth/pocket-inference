@@ -95,26 +95,55 @@ impl Activation {
         let last_axis_len = shape[shape.len() - 1];
         let batch_size = data.len() / last_axis_len;
 
-        for batch in 0..batch_size {
-            let start = batch * last_axis_len;
-            let end = start + last_axis_len;
+        if let Some(slice) = data.as_slice_mut() {
+            for batch in 0..batch_size {
+                let start = batch * last_axis_len;
+                let end = start + last_axis_len;
 
-            let mut max_val = f32::NEG_INFINITY;
-            for i in start..end {
-                if data.as_slice().unwrap()[i] > max_val {
-                    max_val = data.as_slice().unwrap()[i];
+                let mut max_val = f32::NEG_INFINITY;
+                for i in start..end {
+                    if slice[i] > max_val {
+                        max_val = slice[i];
+                    }
+                }
+
+                let mut sum = 0.0;
+                for i in start..end {
+                    slice[i] = (slice[i] - max_val).exp();
+                    sum += slice[i];
+                }
+
+                for i in start..end {
+                    slice[i] /= sum;
                 }
             }
+        } else {
+            for batch in 0..batch_size {
+                let start = batch * last_axis_len;
+                let end = start + last_axis_len;
 
-            let mut sum = 0.0;
-            let slice = data.as_slice_mut().unwrap();
-            for i in start..end {
-                slice[i] = (slice[i] - max_val).exp();
-                sum += slice[i];
-            }
+                let mut max_val = f32::NEG_INFINITY;
+                for i in start..end {
+                    let val = data.as_slice()
+                        .ok_or_else(|| Error::Layer("Softmax requires contiguous tensor".to_string()))?[i];
+                    if val > max_val {
+                        max_val = val;
+                    }
+                }
 
-            for i in start..end {
-                slice[i] /= sum;
+                let mut sum = 0.0;
+                for i in start..end {
+                    let slice = data.as_slice_mut()
+                        .ok_or_else(|| Error::Layer("Softmax requires contiguous tensor".to_string()))?;
+                    slice[i] = (slice[i] - max_val).exp();
+                    sum += slice[i];
+                }
+
+                for i in start..end {
+                    let slice = data.as_slice_mut()
+                        .ok_or_else(|| Error::Layer("Softmax requires contiguous tensor".to_string()))?;
+                    slice[i] /= sum;
+                }
             }
         }
 
@@ -129,7 +158,7 @@ mod tests {
 
     #[test]
     fn test_relu() {
-        let mut tensor = Tensor::from_vec(vec![-1.0, 0.0, 1.0, 2.0], &[4]);
+        let mut tensor = Tensor::from_vec(vec![-1.0, 0.0, 1.0, 2.0], &[4]).unwrap();
         Activation::ReLU.apply(&mut tensor).unwrap();
         let result = tensor.to_vec();
         assert_eq!(result, vec![0.0, 0.0, 1.0, 2.0]);
@@ -137,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_sigmoid() {
-        let mut tensor = Tensor::from_vec(vec![0.0], &[1]);
+        let mut tensor = Tensor::from_vec(vec![0.0], &[1]).unwrap();
         Activation::Sigmoid.apply(&mut tensor).unwrap();
         let result = tensor.to_vec();
         assert_abs_diff_eq!(result[0], 0.5, epsilon = 1e-6);
@@ -145,7 +174,7 @@ mod tests {
 
     #[test]
     fn test_softmax() {
-        let mut tensor = Tensor::from_vec(vec![1.0, 2.0, 3.0], &[3]);
+        let mut tensor = Tensor::from_vec(vec![1.0, 2.0, 3.0], &[3]).unwrap();
         Activation::Softmax.apply(&mut tensor).unwrap();
         let result = tensor.to_vec();
 

@@ -241,7 +241,7 @@ mod tests {
         )
         .unwrap();
 
-        let input = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0], &[2, 2, 1]);
+        let input = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0], &[2, 2, 1]).unwrap();
         let output = layer.forward(&input).unwrap();
 
         assert_eq!(output.shape(), &[2, 2, 1]);

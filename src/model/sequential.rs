@@ -128,7 +128,7 @@ mod tests {
         model.add(Box::new(layer1));
         model.add(Box::new(layer2));
 
-        let input = Tensor::from_vec(vec![1.0, 2.0], &[2]);
+        let input = Tensor::from_vec(vec![1.0, 2.0], &[2]).unwrap();
         let output = model.predict(&input).unwrap();
 
         assert_eq!(output.shape(), &[1]);

@@ -58,11 +58,11 @@ mod tests {
     fn test_flatten() {
         let layer = Flatten::new("test_flatten".to_string());
 
-        let input = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0], &[2, 2]);
+        let input = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0], &[2, 2]).unwrap();
         let output = layer.forward(&input).unwrap();
         assert_eq!(output.shape(), &[2, 2]);
 
-        let input = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], &[2, 1, 3]);
+        let input = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], &[2, 1, 3]).unwrap();
         let output = layer.forward(&input).unwrap();
         assert_eq!(output.shape(), &[2, 3]);
     }

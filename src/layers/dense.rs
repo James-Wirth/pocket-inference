@@ -133,7 +133,7 @@ mod tests {
             Activation::Linear,
         ).unwrap();
 
-        let input = Tensor::from_vec(vec![1.0, 1.0], &[2]);
+        let input = Tensor::from_vec(vec![1.0, 1.0], &[2]).unwrap();
         let output = layer.forward(&input).unwrap();
 
         let result = output.to_vec();
@@ -154,7 +154,7 @@ mod tests {
             Activation::ReLU,
         ).unwrap();
 
-        let input = Tensor::from_vec(vec![1.0, 1.0], &[2]);
+        let input = Tensor::from_vec(vec![1.0, 1.0], &[2]).unwrap();
         let output = layer.forward(&input).unwrap();
 
         let result = output.to_vec();
