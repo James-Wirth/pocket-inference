@@ -223,7 +223,6 @@ impl super::Layer for Conv2D {
 mod tests {
     use super::*;
     use super::super::Layer;
-    use ndarray::Array;
 
     #[test]
     fn test_conv2d_basic() {
