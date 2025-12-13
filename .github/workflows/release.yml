@@ -105,7 +105,7 @@ jobs:
         run: maturin build --release --features python
 
       - name: Upload wheel
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: target/wheels/*.whl
@@ -130,7 +130,7 @@ jobs:
           manylinux: auto
 
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: manylinux-${{ matrix.target }}-py${{ matrix.python-version }}
           path: dist/*.whl
