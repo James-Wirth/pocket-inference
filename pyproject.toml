@@ -1,0 +1,41 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pocket-inference"
+version = "0.1.0"
+description = "Minimal-size Keras model inference library in Rust"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT OR Apache-2.0" }
+keywords = ["keras", "tensorflow", "machine-learning", "inference", "neural-network", "lightweight"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.16",
+]
+
+[project.optional-dependencies]
+dev = [
+    "maturin>=1.0,<2.0",
+    "pytest>=7.0",
+    "tensorflow>=2.0",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module", "python"]
+module-name = "pocket_inference"

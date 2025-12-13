@@ -1,0 +1,31 @@
+[package]
+name = "pocket-inference"
+version = "0.1.0"
+edition = "2021"
+authors = ["James Wirth"]
+description = "Minimal-size Keras model inference library in Rust"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "pocket_inference"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ndarray = "0.16"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+zip = "2.2"
+hdf5 = "0.8.1"
+tempfile = "3.14"
+
+# For Python bindings
+pyo3 = { version = "0.23", features = ["extension-module"], optional = true }
+numpy = { version = "0.23", optional = true }
+
+[features]
+default = []
+python = ["pyo3", "numpy"]
+
+[dev-dependencies]
+approx = "0.5"
