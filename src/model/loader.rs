@@ -35,6 +35,7 @@ pub fn load_from_keras(path: &str) -> Result<Sequential> {
 
     let mut dense_layer_idx = 0;
     let mut conv_layer_idx = 0;
+    let mut bn_layer_idx = 0;
 
     for layer_config in layer_configs {
         let class_name = layer_config["class_name"]
@@ -73,6 +74,15 @@ pub fn load_from_keras(path: &str) -> Result<Sequential> {
                     .as_f64()
                     .unwrap_or(0.5) as f32;
                 Box::new(Dropout::new(layer_name, rate))
+            }
+            "BatchNormalization" => {
+                let h5_layer_name = if bn_layer_idx == 0 {
+                    "batch_normalization".to_string()
+                } else {
+                    format!("batch_normalization_{}", bn_layer_idx)
+                };
+                bn_layer_idx += 1;
+                load_batch_normalization_layer(&h5_file, &h5_layer_name, &layer_name, layer_config)?
             }
             "InputLayer" => {
                 if let Some(batch_shape) = layer_config["config"]["batch_shape"].as_array() {
@@ -375,4 +385,99 @@ fn load_averagepooling2d_layer(config: &Value) -> Result<Box<dyn Layer>> {
     Ok(Box::new(AveragePooling2D::new(
         layer_name, pool_size, strides, padding,
     )))
+}
+
+fn load_batch_normalization_layer(
+    h5_file: &H5File,
+    h5_layer_name: &str,
+    layer_name: &str,
+    config: &Value,
+) -> Result<Box<dyn Layer>> {
+    let epsilon = config["config"]["epsilon"]
+        .as_f64()
+        .unwrap_or(0.001) as f32;
+
+    let center = config["config"]["center"].as_bool().unwrap_or(true);
+    let scale = config["config"]["scale"].as_bool().unwrap_or(true);
+
+    let layer_group = h5_file
+        .group(&format!("layers/{}", h5_layer_name))
+        .or_else(|_| h5_file.group(h5_layer_name))
+        .map_err(|_| {
+            Error::ModelLoad(format!(
+                "Layer weights not found: {} (tried layers/{})",
+                layer_name, h5_layer_name
+            ))
+        })?;
+
+    let vars_group = layer_group.group("vars").map_err(|_| {
+        Error::ModelLoad(format!("vars group not found for layer: {}", layer_name))
+    })?;
+
+    let mut dataset_idx = 0;
+
+    let gamma = if scale {
+        let gamma_dataset = vars_group.dataset(&dataset_idx.to_string()).map_err(|_| {
+            Error::ModelLoad(format!("gamma not found for layer: {}", layer_name))
+        })?;
+        let gamma_data: Vec<f32> = gamma_dataset
+            .read_raw()
+            .map_err(|e| Error::ModelLoad(format!("Failed to read gamma: {}", e)))?;
+        dataset_idx += 1;
+        Array::from_shape_vec(gamma_data.len(), gamma_data)
+            .map_err(|e| Error::ModelLoad(format!("Failed to create gamma array: {}", e)))?
+    } else {
+        let moving_mean_dataset = vars_group.dataset("0").map_err(|_| {
+            Error::ModelLoad(format!("moving_mean not found for layer: {}", layer_name))
+        })?;
+        let shape = moving_mean_dataset.shape();
+        Array::from_elem(shape[0], 1.0)
+    };
+
+    let beta = if center {
+        let beta_dataset = vars_group.dataset(&dataset_idx.to_string()).map_err(|_| {
+            Error::ModelLoad(format!("beta not found for layer: {}", layer_name))
+        })?;
+        let beta_data: Vec<f32> = beta_dataset
+            .read_raw()
+            .map_err(|e| Error::ModelLoad(format!("Failed to read beta: {}", e)))?;
+        dataset_idx += 1;
+        Array::from_shape_vec(beta_data.len(), beta_data)
+            .map_err(|e| Error::ModelLoad(format!("Failed to create beta array: {}", e)))?
+    } else {
+        Array::from_elem(gamma.len(), 0.0)
+    };
+
+    let moving_mean_dataset = vars_group.dataset(&dataset_idx.to_string()).map_err(|_| {
+        Error::ModelLoad(format!("moving_mean not found for layer: {}", layer_name))
+    })?;
+    let moving_mean_data: Vec<f32> = moving_mean_dataset
+        .read_raw()
+        .map_err(|e| Error::ModelLoad(format!("Failed to read moving_mean: {}", e)))?;
+    let moving_mean = Array::from_shape_vec(moving_mean_data.len(), moving_mean_data)
+        .map_err(|e| Error::ModelLoad(format!("Failed to create moving_mean array: {}", e)))?;
+    dataset_idx += 1;
+
+    let moving_variance_dataset = vars_group.dataset(&dataset_idx.to_string()).map_err(|_| {
+        Error::ModelLoad(format!(
+            "moving_variance not found for layer: {}",
+            layer_name
+        ))
+    })?;
+    let moving_variance_data: Vec<f32> = moving_variance_dataset
+        .read_raw()
+        .map_err(|e| Error::ModelLoad(format!("Failed to read moving_variance: {}", e)))?;
+    let moving_variance =
+        Array::from_shape_vec(moving_variance_data.len(), moving_variance_data).map_err(|e| {
+            Error::ModelLoad(format!("Failed to create moving_variance array: {}", e))
+        })?;
+
+    Ok(Box::new(BatchNormalization::new(
+        layer_name.to_string(),
+        gamma,
+        beta,
+        moving_mean,
+        moving_variance,
+        epsilon,
+    )?))
 }

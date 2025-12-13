@@ -86,7 +86,7 @@ maturin develop --features python
 
 ## Roadmap
 
-- Additional layer types (LSTM, GRU, BatchNormalization, ...)
+- Additional layer types (LSTM, GRU, ...)
 - More activation functions (LeakyReLU, ELU, GELU, ...)
 - GPU acceleration via compute shaders
 - Model optimization and pruning tools

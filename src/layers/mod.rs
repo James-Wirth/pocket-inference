@@ -3,6 +3,7 @@ pub mod flatten;
 pub mod dropout;
 pub mod conv2d;
 pub mod pooling;
+pub mod batch_normalization;
 
 use crate::{Result, Tensor};
 
@@ -17,3 +18,4 @@ pub use flatten::Flatten;
 pub use dropout::Dropout;
 pub use conv2d::Conv2D;
 pub use pooling::{MaxPooling2D, AveragePooling2D};
+pub use batch_normalization::BatchNormalization;
