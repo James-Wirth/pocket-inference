@@ -188,14 +188,22 @@ jobs:
           brew install hdf5
           echo "HDF5_DIR=$(brew --prefix hdf5)" >> $GITHUB_ENV
 
-      - name: Install maturin
-        run: pip install maturin numpy
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install maturin and dependencies
+        run: |
+          source .venv/bin/activate
+          pip install maturin numpy
 
       - name: Build Python extension
-        run: maturin develop --release --features python
+        run: |
+          source .venv/bin/activate
+          maturin develop --release --features python
 
       - name: Run Python tests
         run: |
+          source .venv/bin/activate
           if [ -f examples/python/test_bindings.py ]; then
             python examples/python/test_bindings.py
           fi
