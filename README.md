@@ -6,7 +6,7 @@ A lightweight Rust library for running inference on Keras Sequential models, des
 
 | Category | Supported |
 |----------|-----------|
-| **Layers** | Dense, Conv2D, Flatten, MaxPooling2D, AveragePooling2D, Dropout |
+| **Layers** | Dense, Conv2D, Flatten, MaxPooling2D, AveragePooling2D, Dropout, BatchNormalization |
 | **Activations** | ReLU, Softmax, Sigmoid, Tanh, Linear |
 
 ## Installation
