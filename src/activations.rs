@@ -49,9 +49,7 @@ impl Activation {
                 });
                 Ok(())
             }
-            Activation::Softmax => {
-                self.apply_softmax(tensor)
-            }
+            Activation::Softmax => self.apply_softmax(tensor),
             Activation::ELU => {
                 Zip::from(tensor.data_mut()).for_each(|x| {
                     if *x < 0.0 {
@@ -124,8 +122,9 @@ impl Activation {
 
                 let mut max_val = f32::NEG_INFINITY;
                 for i in start..end {
-                    let val = data.as_slice()
-                        .ok_or_else(|| Error::Layer("Softmax requires contiguous tensor".to_string()))?[i];
+                    let val = data.as_slice().ok_or_else(|| {
+                        Error::Layer("Softmax requires contiguous tensor".to_string())
+                    })?[i];
                     if val > max_val {
                         max_val = val;
                     }
@@ -133,15 +132,17 @@ impl Activation {
 
                 let mut sum = 0.0;
                 for i in start..end {
-                    let slice = data.as_slice_mut()
-                        .ok_or_else(|| Error::Layer("Softmax requires contiguous tensor".to_string()))?;
+                    let slice = data.as_slice_mut().ok_or_else(|| {
+                        Error::Layer("Softmax requires contiguous tensor".to_string())
+                    })?;
                     slice[i] = (slice[i] - max_val).exp();
                     sum += slice[i];
                 }
 
                 for i in start..end {
-                    let slice = data.as_slice_mut()
-                        .ok_or_else(|| Error::Layer("Softmax requires contiguous tensor".to_string()))?;
+                    let slice = data.as_slice_mut().ok_or_else(|| {
+                        Error::Layer("Softmax requires contiguous tensor".to_string())
+                    })?;
                     slice[i] /= sum;
                 }
             }
@@ -157,6 +158,18 @@ mod tests {
     use approx::assert_abs_diff_eq;
 
     #[test]
+    fn test_linear() {
+        let original = vec![1.0, -2.0, 3.0, -4.0];
+        let mut tensor = Tensor::from_vec(original.clone(), &[4]).unwrap();
+        Activation::Linear.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+        assert_eq!(
+            result, original,
+            "Linear activation should not modify values"
+        );
+    }
+
+    #[test]
     fn test_relu() {
         let mut tensor = Tensor::from_vec(vec![-1.0, 0.0, 1.0, 2.0], &[4]).unwrap();
         Activation::ReLU.apply(&mut tensor).unwrap();
@@ -165,11 +178,63 @@ mod tests {
     }
 
     #[test]
+    fn test_relu_all_negative() {
+        let mut tensor = Tensor::from_vec(vec![-5.0, -3.0, -1.0], &[3]).unwrap();
+        Activation::ReLU.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+        assert_eq!(result, vec![0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn test_relu_all_positive() {
+        let mut tensor = Tensor::from_vec(vec![1.0, 2.0, 3.0], &[3]).unwrap();
+        Activation::ReLU.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+        assert_eq!(result, vec![1.0, 2.0, 3.0]);
+    }
+
+    #[test]
     fn test_sigmoid() {
         let mut tensor = Tensor::from_vec(vec![0.0], &[1]).unwrap();
         Activation::Sigmoid.apply(&mut tensor).unwrap();
         let result = tensor.to_vec();
         assert_abs_diff_eq!(result[0], 0.5, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_sigmoid_large_positive() {
+        let mut tensor = Tensor::from_vec(vec![10.0], &[1]).unwrap();
+        Activation::Sigmoid.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+        assert_abs_diff_eq!(result[0], 1.0, epsilon = 1e-4);
+    }
+
+    #[test]
+    fn test_sigmoid_large_negative() {
+        let mut tensor = Tensor::from_vec(vec![-10.0], &[1]).unwrap();
+        Activation::Sigmoid.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+        assert_abs_diff_eq!(result[0], 0.0, epsilon = 1e-4);
+    }
+
+    #[test]
+    fn test_tanh() {
+        let mut tensor = Tensor::from_vec(vec![0.0], &[1]).unwrap();
+        Activation::Tanh.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+        assert_abs_diff_eq!(result[0], 0.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_tanh_range() {
+        let mut tensor = Tensor::from_vec(vec![-1.0, 0.0, 1.0], &[3]).unwrap();
+        Activation::Tanh.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+
+        assert_abs_diff_eq!(result[1], 0.0, epsilon = 1e-6);
+        assert!(result[0] < 0.0 && result[0] > -1.0);
+        assert!(result[2] > 0.0 && result[2] < 1.0);
+        assert_abs_diff_eq!(result[0], -result[2], epsilon = 1e-6);
     }
 
     #[test]
@@ -183,5 +248,143 @@ mod tests {
 
         assert!(result[2] > result[1]);
         assert!(result[1] > result[0]);
+    }
+
+    #[test]
+    fn test_softmax_batch() {
+        let mut tensor = Tensor::from_vec(vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0], &[2, 3]).unwrap();
+        Activation::Softmax.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+
+        let sum1: f32 = result[0..3].iter().sum();
+        let sum2: f32 = result[3..6].iter().sum();
+        assert_abs_diff_eq!(sum1, 1.0, epsilon = 1e-6);
+        assert_abs_diff_eq!(sum2, 1.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_softmax_numerical_stability() {
+        let mut tensor = Tensor::from_vec(vec![1000.0, 1001.0, 1002.0], &[3]).unwrap();
+        Activation::Softmax.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+
+        let sum: f32 = result.iter().sum();
+        assert_abs_diff_eq!(sum, 1.0, epsilon = 1e-6);
+        assert!(result.iter().all(|&x| x.is_finite()));
+    }
+
+    #[test]
+    fn test_elu() {
+        let mut tensor = Tensor::from_vec(vec![-1.0, 0.0, 1.0], &[3]).unwrap();
+        Activation::ELU.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+
+        assert_abs_diff_eq!(result[0], (-1.0_f32).exp() - 1.0, epsilon = 1e-6);
+        assert_abs_diff_eq!(result[1], 0.0, epsilon = 1e-6);
+        assert_abs_diff_eq!(result[2], 1.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_selu() {
+        let mut tensor = Tensor::from_vec(vec![-1.0, 0.0, 1.0], &[3]).unwrap();
+        Activation::SELU.apply(&mut tensor).unwrap();
+        let result = tensor.to_vec();
+
+        let alpha = 1.6732632423543772848170429916717;
+        let scale = 1.0507009873554804934193349852946;
+
+        assert_abs_diff_eq!(
+            result[0],
+            scale * alpha * ((-1.0_f32).exp() - 1.0),
+            epsilon = 1e-6
+        );
+        assert_abs_diff_eq!(result[1], 0.0, epsilon = 1e-6);
+        assert_abs_diff_eq!(result[2], scale * 1.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_leaky_relu() {
+        let mut tensor = Tensor::from_vec(vec![-2.0, 0.0, 2.0], &[3]).unwrap();
+        Activation::LeakyReLU { alpha: 0.3 }
+            .apply(&mut tensor)
+            .unwrap();
+        let result = tensor.to_vec();
+
+        assert_abs_diff_eq!(result[0], -2.0 * 0.3, epsilon = 1e-6);
+        assert_abs_diff_eq!(result[1], 0.0, epsilon = 1e-6);
+        assert_abs_diff_eq!(result[2], 2.0, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_leaky_relu_custom_alpha() {
+        let mut tensor = Tensor::from_vec(vec![-1.0], &[1]).unwrap();
+        Activation::LeakyReLU { alpha: 0.01 }
+            .apply(&mut tensor)
+            .unwrap();
+        let result = tensor.to_vec();
+
+        assert_abs_diff_eq!(result[0], -0.01, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_activation_from_str() {
+        assert!(matches!(
+            Activation::from_str("linear").unwrap(),
+            Activation::Linear
+        ));
+        assert!(matches!(
+            Activation::from_str("relu").unwrap(),
+            Activation::ReLU
+        ));
+        assert!(matches!(
+            Activation::from_str("sigmoid").unwrap(),
+            Activation::Sigmoid
+        ));
+        assert!(matches!(
+            Activation::from_str("tanh").unwrap(),
+            Activation::Tanh
+        ));
+        assert!(matches!(
+            Activation::from_str("softmax").unwrap(),
+            Activation::Softmax
+        ));
+        assert!(matches!(
+            Activation::from_str("elu").unwrap(),
+            Activation::ELU
+        ));
+        assert!(matches!(
+            Activation::from_str("selu").unwrap(),
+            Activation::SELU
+        ));
+        assert!(matches!(
+            Activation::from_str("leaky_relu").unwrap(),
+            Activation::LeakyReLU { alpha: 0.3 }
+        ));
+    }
+
+    #[test]
+    fn test_activation_from_str_case_insensitive() {
+        assert!(matches!(
+            Activation::from_str("ReLU").unwrap(),
+            Activation::ReLU
+        ));
+        assert!(matches!(
+            Activation::from_str("SIGMOID").unwrap(),
+            Activation::Sigmoid
+        ));
+    }
+
+    #[test]
+    fn test_activation_from_str_none() {
+        assert!(matches!(
+            Activation::from_str("none").unwrap(),
+            Activation::Linear
+        ));
+    }
+
+    #[test]
+    fn test_activation_from_str_invalid() {
+        let result = Activation::from_str("invalid_activation");
+        assert!(result.is_err());
     }
 }
