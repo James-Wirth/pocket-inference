@@ -1,9 +1,9 @@
-pub mod dense;
-pub mod flatten;
-pub mod dropout;
-pub mod conv2d;
-pub mod pooling;
 pub mod batch_normalization;
+pub mod conv2d;
+pub mod dense;
+pub mod dropout;
+pub mod flatten;
+pub mod pooling;
 
 use crate::{Result, Tensor};
 
@@ -13,9 +13,9 @@ pub trait Layer: std::fmt::Debug + Send + Sync {
     fn output_shape(&self, input_shape: &[usize]) -> Result<Vec<usize>>;
 }
 
-pub use dense::Dense;
-pub use flatten::Flatten;
-pub use dropout::Dropout;
-pub use conv2d::Conv2D;
-pub use pooling::{MaxPooling2D, AveragePooling2D};
 pub use batch_normalization::BatchNormalization;
+pub use conv2d::Conv2D;
+pub use dense::Dense;
+pub use dropout::Dropout;
+pub use flatten::Flatten;
+pub use pooling::{AveragePooling2D, MaxPooling2D};

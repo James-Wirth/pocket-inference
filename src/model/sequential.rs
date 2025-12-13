@@ -42,9 +42,9 @@ impl Sequential {
         let mut current = input.clone();
 
         for (idx, layer) in self.layers.iter().enumerate() {
-            current = layer.forward(&current).map_err(|e| {
-                Error::Layer(format!("Layer {} ({}): {}", idx, layer.name(), e))
-            })?;
+            current = layer
+                .forward(&current)
+                .map_err(|e| Error::Layer(format!("Layer {} ({}): {}", idx, layer.name(), e)))?;
         }
 
         Ok(current)
@@ -77,11 +77,7 @@ impl Sequential {
                 };
             }
 
-            s.push_str(&format!(
-                "{:28} {:?}\n",
-                layer.name(),
-                current_shape
-            ));
+            s.push_str(&format!("{:28} {:?}\n", layer.name(), current_shape));
         }
 
         s.push_str("=================================================================\n");
@@ -107,23 +103,11 @@ mod tests {
 
         let weights1 = array![[1.0, 0.5], [0.5, 1.0]];
         let bias1 = Some(array![[0.0, 0.0]]);
-        let layer1 = Dense::new(
-            "dense1".to_string(),
-            weights1,
-            bias1,
-            Activation::ReLU,
-        )
-        .unwrap();
+        let layer1 = Dense::new("dense1".to_string(), weights1, bias1, Activation::ReLU).unwrap();
 
         let weights2 = array![[1.0], [1.0]];
         let bias2 = Some(array![[0.0]]);
-        let layer2 = Dense::new(
-            "dense2".to_string(),
-            weights2,
-            bias2,
-            Activation::Linear,
-        )
-        .unwrap();
+        let layer2 = Dense::new("dense2".to_string(), weights2, bias2, Activation::Linear).unwrap();
 
         model.add(Box::new(layer1));
         model.add(Box::new(layer2));

@@ -11,8 +11,9 @@ impl Tensor {
     }
 
     pub fn from_vec(vec: Vec<f32>, shape: &[usize]) -> crate::Result<Self> {
-        let data = Array::from_shape_vec(IxDyn(shape), vec)
-            .map_err(|e| crate::Error::Layer(format!("Shape and vector length must match: {}", e)))?;
+        let data = Array::from_shape_vec(IxDyn(shape), vec).map_err(|e| {
+            crate::Error::Layer(format!("Shape and vector length must match: {}", e))
+        })?;
         Ok(Self { data })
     }
 
@@ -54,7 +55,10 @@ impl Tensor {
             });
         }
 
-        let reshaped = self.data.clone().into_shape_with_order(IxDyn(new_shape))
+        let reshaped = self
+            .data
+            .clone()
+            .into_shape_with_order(IxDyn(new_shape))
             .map_err(|e| crate::Error::Layer(format!("Reshape failed: {}", e)))?;
         Ok(Self { data: reshaped })
     }

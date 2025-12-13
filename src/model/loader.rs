@@ -70,9 +70,7 @@ pub fn load_from_keras(path: &str) -> Result<Sequential> {
             "AveragePooling2D" => load_averagepooling2d_layer(layer_config)?,
             "Flatten" => Box::new(Flatten::new(layer_name)),
             "Dropout" => {
-                let rate = layer_config["config"]["rate"]
-                    .as_f64()
-                    .unwrap_or(0.5) as f32;
+                let rate = layer_config["config"]["rate"].as_f64().unwrap_or(0.5) as f32;
                 Box::new(Dropout::new(layer_name, rate))
             }
             "BatchNormalization" => {
@@ -120,10 +118,12 @@ fn read_config(archive: &mut ZipArchive<BufReader<File>>) -> Result<Value> {
     Ok(config)
 }
 
-fn extract_weights_h5(archive: &mut ZipArchive<BufReader<File>>) -> Result<tempfile::NamedTempFile> {
-    let mut weights_zip = archive
-        .by_name("model.weights.h5")
-        .map_err(|e| Error::ModelLoad(format!("model.weights.h5 not found in .keras file: {}", e)))?;
+fn extract_weights_h5(
+    archive: &mut ZipArchive<BufReader<File>>,
+) -> Result<tempfile::NamedTempFile> {
+    let mut weights_zip = archive.by_name("model.weights.h5").map_err(|e| {
+        Error::ModelLoad(format!("model.weights.h5 not found in .keras file: {}", e))
+    })?;
 
     let mut temp_file = tempfile::NamedTempFile::new()?;
     let mut buffer = Vec::new();
@@ -145,19 +145,20 @@ fn load_dense_layer(
         .ok_or_else(|| Error::ModelLoad("Dense layer missing units".to_string()))?
         as usize;
 
-    let activation_str = config["config"]["activation"]
-        .as_str()
-        .unwrap_or("linear");
+    let activation_str = config["config"]["activation"].as_str().unwrap_or("linear");
     let activation = Activation::from_str(activation_str)?;
 
     let use_bias = config["config"]["use_bias"].as_bool().unwrap_or(true);
 
     let layer_group = h5_file
         .group(&format!("layers/{}", h5_layer_name))
-        .or_else(|_| {
-            h5_file.group(h5_layer_name)
-        })
-        .map_err(|_| Error::ModelLoad(format!("Layer weights not found: {} (tried layers/{})", layer_name, h5_layer_name)))?;
+        .or_else(|_| h5_file.group(h5_layer_name))
+        .map_err(|_| {
+            Error::ModelLoad(format!(
+                "Layer weights not found: {} (tried layers/{})",
+                layer_name, h5_layer_name
+            ))
+        })?;
 
     let vars_group = layer_group
         .group("vars")
@@ -192,7 +193,12 @@ fn load_dense_layer(
         None
     };
 
-    Ok(Box::new(Dense::new(layer_name.to_string(), weights, bias, activation)?))
+    Ok(Box::new(Dense::new(
+        layer_name.to_string(),
+        weights,
+        bias,
+        activation,
+    )?))
 }
 
 fn load_conv2d_layer(
@@ -213,11 +219,13 @@ fn load_conv2d_layer(
         kernel_size_arr
             .get(0)
             .and_then(|v| v.as_u64())
-            .ok_or_else(|| Error::ModelLoad("Invalid kernel_size[0] in config".to_string()))? as usize,
+            .ok_or_else(|| Error::ModelLoad("Invalid kernel_size[0] in config".to_string()))?
+            as usize,
         kernel_size_arr
             .get(1)
             .and_then(|v| v.as_u64())
-            .ok_or_else(|| Error::ModelLoad("Invalid kernel_size[1] in config".to_string()))? as usize,
+            .ok_or_else(|| Error::ModelLoad("Invalid kernel_size[1] in config".to_string()))?
+            as usize,
     );
 
     let strides_arr = config["config"]["strides"].as_array();
@@ -225,10 +233,12 @@ fn load_conv2d_layer(
         (
             s.get(0)
                 .and_then(|v| v.as_u64())
-                .ok_or_else(|| Error::ModelLoad("Invalid strides[0] in config".to_string()))? as usize,
+                .ok_or_else(|| Error::ModelLoad("Invalid strides[0] in config".to_string()))?
+                as usize,
             s.get(1)
                 .and_then(|v| v.as_u64())
-                .ok_or_else(|| Error::ModelLoad("Invalid strides[1] in config".to_string()))? as usize,
+                .ok_or_else(|| Error::ModelLoad("Invalid strides[1] in config".to_string()))?
+                as usize,
         )
     } else {
         (1, 1)
@@ -237,19 +247,20 @@ fn load_conv2d_layer(
     let padding_str = config["config"]["padding"].as_str().unwrap_or("valid");
     let padding = Padding::from_str(padding_str)?;
 
-    let activation_str = config["config"]["activation"]
-        .as_str()
-        .unwrap_or("linear");
+    let activation_str = config["config"]["activation"].as_str().unwrap_or("linear");
     let activation = Activation::from_str(activation_str)?;
 
     let use_bias = config["config"]["use_bias"].as_bool().unwrap_or(true);
 
     let layer_group = h5_file
         .group(&format!("layers/{}", h5_layer_name))
-        .or_else(|_| {
-            h5_file.group(h5_layer_name)
-        })
-        .map_err(|_| Error::ModelLoad(format!("Layer weights not found: {} (tried layers/{})", layer_name, h5_layer_name)))?;
+        .or_else(|_| h5_file.group(h5_layer_name))
+        .map_err(|_| {
+            Error::ModelLoad(format!(
+                "Layer weights not found: {} (tried layers/{})",
+                layer_name, h5_layer_name
+            ))
+        })?;
 
     let vars_group = layer_group
         .group("vars")
@@ -314,11 +325,13 @@ fn load_maxpooling2d_layer(config: &Value) -> Result<Box<dyn Layer>> {
         pool_size_arr
             .get(0)
             .and_then(|v| v.as_u64())
-            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[0] in config".to_string()))? as usize,
+            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[0] in config".to_string()))?
+            as usize,
         pool_size_arr
             .get(1)
             .and_then(|v| v.as_u64())
-            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[1] in config".to_string()))? as usize,
+            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[1] in config".to_string()))?
+            as usize,
     );
 
     let strides = if let Some(strides_arr) = config["config"]["strides"].as_array() {
@@ -326,11 +339,13 @@ fn load_maxpooling2d_layer(config: &Value) -> Result<Box<dyn Layer>> {
             strides_arr
                 .get(0)
                 .and_then(|v| v.as_u64())
-                .ok_or_else(|| Error::ModelLoad("Invalid strides[0] in config".to_string()))? as usize,
+                .ok_or_else(|| Error::ModelLoad("Invalid strides[0] in config".to_string()))?
+                as usize,
             strides_arr
                 .get(1)
                 .and_then(|v| v.as_u64())
-                .ok_or_else(|| Error::ModelLoad("Invalid strides[1] in config".to_string()))? as usize,
+                .ok_or_else(|| Error::ModelLoad("Invalid strides[1] in config".to_string()))?
+                as usize,
         ))
     } else {
         None
@@ -357,11 +372,13 @@ fn load_averagepooling2d_layer(config: &Value) -> Result<Box<dyn Layer>> {
         pool_size_arr
             .get(0)
             .and_then(|v| v.as_u64())
-            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[0] in config".to_string()))? as usize,
+            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[0] in config".to_string()))?
+            as usize,
         pool_size_arr
             .get(1)
             .and_then(|v| v.as_u64())
-            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[1] in config".to_string()))? as usize,
+            .ok_or_else(|| Error::ModelLoad("Invalid pool_size[1] in config".to_string()))?
+            as usize,
     );
 
     let strides = if let Some(strides_arr) = config["config"]["strides"].as_array() {
@@ -369,11 +386,13 @@ fn load_averagepooling2d_layer(config: &Value) -> Result<Box<dyn Layer>> {
             strides_arr
                 .get(0)
                 .and_then(|v| v.as_u64())
-                .ok_or_else(|| Error::ModelLoad("Invalid strides[0] in config".to_string()))? as usize,
+                .ok_or_else(|| Error::ModelLoad("Invalid strides[0] in config".to_string()))?
+                as usize,
             strides_arr
                 .get(1)
                 .and_then(|v| v.as_u64())
-                .ok_or_else(|| Error::ModelLoad("Invalid strides[1] in config".to_string()))? as usize,
+                .ok_or_else(|| Error::ModelLoad("Invalid strides[1] in config".to_string()))?
+                as usize,
         ))
     } else {
         None
@@ -393,9 +412,7 @@ fn load_batch_normalization_layer(
     layer_name: &str,
     config: &Value,
 ) -> Result<Box<dyn Layer>> {
-    let epsilon = config["config"]["epsilon"]
-        .as_f64()
-        .unwrap_or(0.001) as f32;
+    let epsilon = config["config"]["epsilon"].as_f64().unwrap_or(0.001) as f32;
 
     let center = config["config"]["center"].as_bool().unwrap_or(true);
     let scale = config["config"]["scale"].as_bool().unwrap_or(true);
@@ -410,16 +427,16 @@ fn load_batch_normalization_layer(
             ))
         })?;
 
-    let vars_group = layer_group.group("vars").map_err(|_| {
-        Error::ModelLoad(format!("vars group not found for layer: {}", layer_name))
-    })?;
+    let vars_group = layer_group
+        .group("vars")
+        .map_err(|_| Error::ModelLoad(format!("vars group not found for layer: {}", layer_name)))?;
 
     let mut dataset_idx = 0;
 
     let gamma = if scale {
-        let gamma_dataset = vars_group.dataset(&dataset_idx.to_string()).map_err(|_| {
-            Error::ModelLoad(format!("gamma not found for layer: {}", layer_name))
-        })?;
+        let gamma_dataset = vars_group
+            .dataset(&dataset_idx.to_string())
+            .map_err(|_| Error::ModelLoad(format!("gamma not found for layer: {}", layer_name)))?;
         let gamma_data: Vec<f32> = gamma_dataset
             .read_raw()
             .map_err(|e| Error::ModelLoad(format!("Failed to read gamma: {}", e)))?;
@@ -435,9 +452,9 @@ fn load_batch_normalization_layer(
     };
 
     let beta = if center {
-        let beta_dataset = vars_group.dataset(&dataset_idx.to_string()).map_err(|_| {
-            Error::ModelLoad(format!("beta not found for layer: {}", layer_name))
-        })?;
+        let beta_dataset = vars_group
+            .dataset(&dataset_idx.to_string())
+            .map_err(|_| Error::ModelLoad(format!("beta not found for layer: {}", layer_name)))?;
         let beta_data: Vec<f32> = beta_dataset
             .read_raw()
             .map_err(|e| Error::ModelLoad(format!("Failed to read beta: {}", e)))?;
@@ -467,10 +484,10 @@ fn load_batch_normalization_layer(
     let moving_variance_data: Vec<f32> = moving_variance_dataset
         .read_raw()
         .map_err(|e| Error::ModelLoad(format!("Failed to read moving_variance: {}", e)))?;
-    let moving_variance =
-        Array::from_shape_vec(moving_variance_data.len(), moving_variance_data).map_err(|e| {
-            Error::ModelLoad(format!("Failed to create moving_variance array: {}", e))
-        })?;
+    let moving_variance = Array::from_shape_vec(moving_variance_data.len(), moving_variance_data)
+        .map_err(|e| {
+        Error::ModelLoad(format!("Failed to create moving_variance array: {}", e))
+    })?;
 
     Ok(Box::new(BatchNormalization::new(
         layer_name.to_string(),

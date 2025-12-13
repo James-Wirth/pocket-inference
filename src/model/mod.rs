@@ -1,5 +1,5 @@
-pub mod sequential;
 pub mod loader;
+pub mod sequential;
 
-pub use sequential::Sequential;
 pub use loader::load_from_keras;
+pub use sequential::Sequential;

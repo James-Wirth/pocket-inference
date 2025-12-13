@@ -55,7 +55,13 @@ impl super::Layer for MaxPooling2D {
         let input_shape = input.shape();
 
         let (batch_size, height, width, channels, is_batched) = if input_shape.len() == 4 {
-            (input_shape[0], input_shape[1], input_shape[2], input_shape[3], true)
+            (
+                input_shape[0],
+                input_shape[1],
+                input_shape[2],
+                input_shape[3],
+                true,
+            )
         } else if input_shape.len() == 3 {
             (1, input_shape[0], input_shape[1], input_shape[2], false)
         } else {
@@ -66,10 +72,16 @@ impl super::Layer for MaxPooling2D {
         };
 
         let input_4d = if is_batched {
-            input.data().clone().into_shape_with_order((batch_size, height, width, channels))
+            input
+                .data()
+                .clone()
+                .into_shape_with_order((batch_size, height, width, channels))
                 .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
         } else {
-            input.data().clone().into_shape_with_order((1, height, width, channels))
+            input
+                .data()
+                .clone()
+                .into_shape_with_order((1, height, width, channels))
                 .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
         };
 
@@ -107,7 +119,8 @@ impl super::Layer for MaxPooling2D {
             vec![out_height, out_width, channels]
         };
 
-        let output_dyn = output.into_shape_with_order(ndarray::IxDyn(&output_shape))
+        let output_dyn = output
+            .into_shape_with_order(ndarray::IxDyn(&output_shape))
             .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         Ok(Tensor::new(output_dyn))
@@ -191,7 +204,13 @@ impl super::Layer for AveragePooling2D {
         let input_shape = input.shape();
 
         let (batch_size, height, width, channels, is_batched) = if input_shape.len() == 4 {
-            (input_shape[0], input_shape[1], input_shape[2], input_shape[3], true)
+            (
+                input_shape[0],
+                input_shape[1],
+                input_shape[2],
+                input_shape[3],
+                true,
+            )
         } else if input_shape.len() == 3 {
             (1, input_shape[0], input_shape[1], input_shape[2], false)
         } else {
@@ -202,10 +221,16 @@ impl super::Layer for AveragePooling2D {
         };
 
         let input_4d = if is_batched {
-            input.data().clone().into_shape_with_order((batch_size, height, width, channels))
+            input
+                .data()
+                .clone()
+                .into_shape_with_order((batch_size, height, width, channels))
                 .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
         } else {
-            input.data().clone().into_shape_with_order((1, height, width, channels))
+            input
+                .data()
+                .clone()
+                .into_shape_with_order((1, height, width, channels))
                 .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
         };
 
@@ -242,7 +267,8 @@ impl super::Layer for AveragePooling2D {
             vec![out_height, out_width, channels]
         };
 
-        let output_dyn = output.into_shape_with_order(ndarray::IxDyn(&output_shape))
+        let output_dyn = output
+            .into_shape_with_order(ndarray::IxDyn(&output_shape))
             .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         Ok(Tensor::new(output_dyn))

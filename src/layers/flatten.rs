@@ -51,8 +51,8 @@ impl super::Layer for Flatten {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::Layer;
+    use super::*;
 
     #[test]
     fn test_flatten() {

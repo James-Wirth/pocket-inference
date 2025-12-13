@@ -67,10 +67,14 @@ impl super::Layer for Dense {
         }
 
         let input_2d = if input_shape.len() == 1 {
-            input_data.clone().into_shape_with_order((1, features))
+            input_data
+                .clone()
+                .into_shape_with_order((1, features))
                 .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
         } else {
-            input_data.clone().into_shape_with_order((batch_size, features))
+            input_data
+                .clone()
+                .into_shape_with_order((batch_size, features))
                 .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
         };
 
@@ -88,7 +92,8 @@ impl super::Layer for Dense {
             vec![batch_size, self.units]
         };
 
-        let output_dyn = output.into_shape_with_order(IxDyn(&output_shape))
+        let output_dyn = output
+            .into_shape_with_order(IxDyn(&output_shape))
             .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         let mut tensor = Tensor::new(output_dyn);
@@ -117,8 +122,8 @@ impl super::Layer for Dense {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::Layer;
+    use super::*;
     use ndarray::array;
 
     #[test]
@@ -126,12 +131,8 @@ mod tests {
         let weights = array![[1.0, 2.0], [3.0, 4.0]];
         let bias = Some(array![[0.1, 0.2]]);
 
-        let layer = Dense::new(
-            "test_dense".to_string(),
-            weights,
-            bias,
-            Activation::Linear,
-        ).unwrap();
+        let layer =
+            Dense::new("test_dense".to_string(), weights, bias, Activation::Linear).unwrap();
 
         let input = Tensor::from_vec(vec![1.0, 1.0], &[2]).unwrap();
         let output = layer.forward(&input).unwrap();
@@ -147,12 +148,7 @@ mod tests {
         let weights = array![[1.0, -2.0], [-3.0, 4.0]];
         let bias = None;
 
-        let layer = Dense::new(
-            "test_dense".to_string(),
-            weights,
-            bias,
-            Activation::ReLU,
-        ).unwrap();
+        let layer = Dense::new("test_dense".to_string(), weights, bias, Activation::ReLU).unwrap();
 
         let input = Tensor::from_vec(vec![1.0, 1.0], &[2]).unwrap();
         let output = layer.forward(&input).unwrap();

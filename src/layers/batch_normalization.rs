@@ -75,7 +75,6 @@ impl super::Layer for BatchNormalization {
         let mut output = input_data.clone();
 
         if let Some(data) = output.as_slice_mut() {
-
             let total_elements = data.len();
             let elements_per_feature = total_elements / num_features;
 
@@ -214,7 +213,7 @@ mod tests {
     #[test]
     fn test_batch_norm_validation() {
         let gamma = array![1.0, 1.0];
-        let beta = array![0.0]; 
+        let beta = array![0.0];
         let moving_mean = array![0.5, 0.5];
         let moving_variance = array![0.25, 0.25];
 

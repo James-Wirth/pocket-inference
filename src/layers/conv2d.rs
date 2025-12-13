@@ -10,7 +10,7 @@ pub struct Conv2D {
     kernel_size: (usize, usize),
     strides: (usize, usize),
     padding: Padding,
-    weights: Array4<f32>, 
+    weights: Array4<f32>,
     bias: Option<Vec<f32>>,
     activation: Activation,
 }
@@ -68,10 +68,10 @@ impl Conv2D {
             Padding::Same => {
                 let (out_h, out_w) = self.compute_output_size(height, width);
 
-                let pad_h = ((out_h - 1) * self.strides.0 + self.kernel_size.0)
-                    .saturating_sub(height);
-                let pad_w = ((out_w - 1) * self.strides.1 + self.kernel_size.1)
-                    .saturating_sub(width);
+                let pad_h =
+                    ((out_h - 1) * self.strides.0 + self.kernel_size.0).saturating_sub(height);
+                let pad_w =
+                    ((out_w - 1) * self.strides.1 + self.kernel_size.1).saturating_sub(width);
 
                 let pad_top = pad_h / 2;
                 let pad_bottom = pad_h - pad_top;
@@ -127,8 +127,7 @@ impl super::Layer for Conv2D {
         };
 
         let (out_height, out_width) = self.compute_output_size(height, width);
-        let ((pad_top, _pad_bottom), (pad_left, _pad_right)) =
-            self.compute_padding(height, width);
+        let ((pad_top, _pad_bottom), (pad_left, _pad_right)) = self.compute_padding(height, width);
 
         let mut output = Array4::zeros((batch_size, out_height, out_width, self.filters));
 
@@ -144,8 +143,10 @@ impl super::Layer for Conv2D {
                                     let ih = oh * self.strides.0 + kh;
                                     let iw = ow * self.strides.1 + kw;
 
-                                    if ih < pad_top || ih >= height + pad_top
-                                        || iw < pad_left || iw >= width + pad_left
+                                    if ih < pad_top
+                                        || ih >= height + pad_top
+                                        || iw < pad_left
+                                        || iw >= width + pad_left
                                     {
                                         continue;
                                     }
@@ -194,12 +195,7 @@ impl super::Layer for Conv2D {
 
     fn output_shape(&self, input_shape: &[usize]) -> Result<Vec<usize>> {
         let (height, width, _channels, is_batched) = if input_shape.len() == 4 {
-            (
-                input_shape[1],
-                input_shape[2],
-                input_shape[3],
-                true,
-            )
+            (input_shape[1], input_shape[2], input_shape[3], true)
         } else if input_shape.len() == 3 {
             (input_shape[0], input_shape[1], input_shape[2], false)
         } else {
@@ -221,8 +217,8 @@ impl super::Layer for Conv2D {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::Layer;
+    use super::*;
 
     #[test]
     fn test_conv2d_basic() {
