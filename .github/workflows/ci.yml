@@ -37,8 +37,10 @@ jobs:
       - name: Install HDF5 (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install hdf5 pkg-config
-          HDF5_DIR=$(brew --prefix hdf5)
+          # Install HDF5 1.10 (hdf5-sys 0.8.1 doesn't support 1.14)
+          brew install pkg-config
+          brew install hdf5@1.10
+          HDF5_DIR=$(brew --prefix hdf5@1.10)
           echo "HDF5_DIR=$HDF5_DIR" >> $GITHUB_ENV
           echo "HDF5_ROOT=$HDF5_DIR" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$HDF5_DIR/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
