@@ -39,6 +39,7 @@ jobs:
         run: |
           brew install hdf5
           echo "HDF5_ROOT=$(brew --prefix hdf5)" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix hdf5)/lib/pkgconfig" >> $GITHUB_ENV
 
       - name: Build
         run: cargo build --verbose
