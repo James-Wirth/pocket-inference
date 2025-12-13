@@ -20,7 +20,7 @@ hdf5 = "0.8.1"
 tempfile = "3.14"
 
 # For Python bindings
-pyo3 = { version = "0.23", features = ["extension-module"], optional = true }
+pyo3 = { version = "0.27", features = ["extension-module"], optional = true }
 numpy = { version = "0.23", optional = true }
 
 [features]
