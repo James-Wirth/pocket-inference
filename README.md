@@ -1,5 +1,8 @@
 # Pocket Inference
 
+[![CI](https://github.com/James-Wirth/pocket-inference/workflows/CI/badge.svg)](https://github.com/James-Wirth/pocket-inference/actions)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+
 A lightweight Rust library for running inference on Keras Sequential models, designed for deployment on resource-constrained environments without the full TensorFlow/Keras stack.
 
 ## Features
