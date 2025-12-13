@@ -1,0 +1,11 @@
+# Clippy configuration for pocket-inference
+
+# Pedantic warnings we want to allow
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+
+# Performance
+too-many-arguments-threshold = 8
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 30
