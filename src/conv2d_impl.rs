@@ -28,7 +28,6 @@ pub fn im2col(
 
                 for kh in 0..kernel_h {
                     for kw in 0..kernel_w {
-
                         let ih = (oh * stride_h + kh).wrapping_sub(pad_top);
                         let iw = (ow * stride_w + kw).wrapping_sub(pad_left);
 
@@ -64,7 +63,6 @@ mod tests {
 
     #[test]
     fn test_im2col_with_stride() {
-
         let input = Array4::from_shape_vec(
             (1, 3, 3, 1),
             vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0],
@@ -79,7 +77,6 @@ mod tests {
 
     #[test]
     fn test_im2col_with_padding() {
-
         let input = Array4::from_shape_vec((1, 2, 2, 1), vec![1.0, 2.0, 3.0, 4.0]).unwrap();
 
         let col = im2col(&input, 3, 3, 1, 1, 1, 1, 2, 2);
@@ -87,21 +84,14 @@ mod tests {
         assert_eq!(col.shape(), &[4, 9]);
 
         let first_patch = col.row(0).to_vec();
-        assert_eq!(first_patch[4], 1.0); 
+        assert_eq!(first_patch[4], 1.0);
     }
 
     #[test]
     fn test_im2col_multiple_channels() {
-        let input = Array4::from_shape_vec(
-            (1, 2, 2, 2),
-            vec![
-                1.0, 5.0,
-                2.0, 6.0, 
-                3.0, 7.0, 
-                4.0, 8.0, 
-            ],
-        )
-        .unwrap();
+        let input =
+            Array4::from_shape_vec((1, 2, 2, 2), vec![1.0, 5.0, 2.0, 6.0, 3.0, 7.0, 4.0, 8.0])
+                .unwrap();
 
         let col = im2col(&input, 2, 2, 1, 1, 0, 0, 1, 1);
 
@@ -114,14 +104,9 @@ mod tests {
 
     #[test]
     fn test_im2col_batch() {
-        let input = Array4::from_shape_vec(
-            (2, 2, 2, 1),
-            vec![
-                1.0, 2.0, 3.0, 4.0, 
-                5.0, 6.0, 7.0, 8.0, 
-            ],
-        )
-        .unwrap();
+        let input =
+            Array4::from_shape_vec((2, 2, 2, 1), vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+                .unwrap();
 
         let col = im2col(&input, 2, 2, 1, 1, 0, 0, 1, 1);
 

@@ -118,7 +118,9 @@ impl super::Layer for Conv2D {
             input.into_reshape(&[1, height, width, in_channels])?
         };
 
-        let input_4d = input_reshaped.data().to_owned()
+        let input_4d = input_reshaped
+            .data()
+            .to_owned()
             .into_shape_with_order((batch_size, height, width, in_channels))
             .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 

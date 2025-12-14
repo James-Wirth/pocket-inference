@@ -71,7 +71,9 @@ impl super::Layer for Dense {
             input.into_reshape(&[batch_size, features])?
         };
 
-        let input_2d = input_reshaped.data().to_owned()
+        let input_2d = input_reshaped
+            .data()
+            .to_owned()
             .into_shape_with_order((batch_size, features))
             .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
