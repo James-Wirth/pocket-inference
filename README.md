@@ -5,7 +5,7 @@
 
 A lightweight Rust library for running inference on Keras Sequential models, designed for deployment on resource-constrained environments without the full TensorFlow/Keras stack.
 
-Binary size: **~ 450 KB**
+Binary size: **~450 KB**
 
 ## Features
 
