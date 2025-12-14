@@ -1,4 +1,4 @@
-use crate::{activations::Activation, Error, Result, Tensor};
+use crate::{activations::Activation, conv2d_impl, Error, Result, Tensor};
 use ndarray::Array4;
 
 use super::pooling::Padding;
@@ -85,8 +85,8 @@ impl Conv2D {
 }
 
 impl super::Layer for Conv2D {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        let input_shape = input.shape();
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        let input_shape = input.shape().to_vec();
 
         let (batch_size, height, width, in_channels, is_batched) = if input_shape.len() == 4 {
             (
@@ -112,66 +112,52 @@ impl super::Layer for Conv2D {
             });
         }
 
-        let input_4d = if is_batched {
-            input
-                .data()
-                .clone()
-                .into_shape_with_order((batch_size, height, width, in_channels))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+        let input_reshaped = if is_batched {
+            input.into_reshape(&[batch_size, height, width, in_channels])?
         } else {
-            input
-                .data()
-                .clone()
-                .into_shape_with_order((1, height, width, in_channels))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+            input.into_reshape(&[1, height, width, in_channels])?
         };
+
+        let input_4d = input_reshaped.data().to_owned()
+            .into_shape_with_order((batch_size, height, width, in_channels))
+            .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         let (out_height, out_width) = self.compute_output_size(height, width);
         let ((pad_top, _pad_bottom), (pad_left, _pad_right)) = self.compute_padding(height, width);
 
-        let mut output = Array4::zeros((batch_size, out_height, out_width, self.filters));
+        let col_matrix = conv2d_impl::im2col(
+            &input_4d,
+            self.kernel_size.0,
+            self.kernel_size.1,
+            self.strides.0,
+            self.strides.1,
+            pad_top,
+            pad_left,
+            out_height,
+            out_width,
+        );
 
-        for b in 0..batch_size {
-            for f in 0..self.filters {
-                for oh in 0..out_height {
-                    for ow in 0..out_width {
-                        let mut sum = 0.0;
+        let kernel_flat_size = self.kernel_size.0 * self.kernel_size.1 * in_channels;
+        let weights_2d = self
+            .weights
+            .clone()
+            .into_shape_with_order((kernel_flat_size, self.filters))
+            .map_err(|e| Error::Layer(format!("Weight reshape failed: {}", e)))?;
 
-                        for kh in 0..self.kernel_size.0 {
-                            for kw in 0..self.kernel_size.1 {
-                                for ic in 0..in_channels {
-                                    let ih = oh * self.strides.0 + kh;
-                                    let iw = ow * self.strides.1 + kw;
+        let mut output_2d = col_matrix.dot(&weights_2d);
 
-                                    if ih < pad_top
-                                        || ih >= height + pad_top
-                                        || iw < pad_left
-                                        || iw >= width + pad_left
-                                    {
-                                        continue;
-                                    }
-
-                                    let ih_actual = ih - pad_top;
-                                    let iw_actual = iw - pad_left;
-
-                                    if ih_actual < height && iw_actual < width {
-                                        let input_val = input_4d[[b, ih_actual, iw_actual, ic]];
-                                        let weight_val = self.weights[[kh, kw, ic, f]];
-                                        sum += input_val * weight_val;
-                                    }
-                                }
-                            }
-                        }
-
-                        if let Some(ref bias) = self.bias {
-                            sum += bias[f];
-                        }
-
-                        output[[b, oh, ow, f]] = sum;
-                    }
+        if let Some(ref bias) = self.bias {
+            for mut row in output_2d.rows_mut() {
+                for (i, val) in row.iter_mut().enumerate() {
+                    *val += bias[i];
                 }
             }
         }
+
+        // Reshape output: (B*OH*OW, F) -> (B, OH, OW, F)
+        let output = output_2d
+            .into_shape_with_order((batch_size, out_height, out_width, self.filters))
+            .map_err(|e| Error::Layer(format!("Output reshape failed: {}", e)))?;
 
         let output_shape = if is_batched {
             vec![batch_size, out_height, out_width, self.filters]

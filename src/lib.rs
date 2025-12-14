@@ -13,6 +13,7 @@
 //! ```
 
 pub mod activations;
+mod conv2d_impl;
 pub mod error;
 pub mod layers;
 pub mod model;
