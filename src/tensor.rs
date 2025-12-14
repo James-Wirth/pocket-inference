@@ -63,6 +63,22 @@ impl Tensor {
         Ok(Self { data: reshaped })
     }
 
+    pub fn into_reshape(self, new_shape: &[usize]) -> crate::Result<Self> {
+        let total_elements: usize = new_shape.iter().product();
+        if total_elements != self.len() {
+            return Err(crate::Error::ShapeMismatch {
+                expected: vec![total_elements],
+                actual: vec![self.len()],
+            });
+        }
+
+        let reshaped = self
+            .data
+            .into_shape_with_order(IxDyn(new_shape))
+            .map_err(|e| crate::Error::Layer(format!("Reshape failed: {}", e)))?;
+        Ok(Self { data: reshaped })
+    }
+
     pub fn to_vec(&self) -> Vec<f32> {
         self.data.iter().copied().collect()
     }
