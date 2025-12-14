@@ -51,8 +51,8 @@ impl MaxPooling2D {
 }
 
 impl super::Layer for MaxPooling2D {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        let input_shape = input.shape();
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        let input_shape = input.shape().to_vec();
 
         let (batch_size, height, width, channels, is_batched) = if input_shape.len() == 4 {
             (
@@ -71,19 +71,15 @@ impl super::Layer for MaxPooling2D {
             )));
         };
 
-        let input_4d = if is_batched {
-            input
-                .data()
-                .clone()
-                .into_shape_with_order((batch_size, height, width, channels))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+        let input_reshaped = if is_batched {
+            input.into_reshape(&[batch_size, height, width, channels])?
         } else {
-            input
-                .data()
-                .clone()
-                .into_shape_with_order((1, height, width, channels))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+            input.into_reshape(&[1, height, width, channels])?
         };
+
+        let input_4d = input_reshaped.data().to_owned()
+            .into_shape_with_order((batch_size, height, width, channels))
+            .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         let (out_height, out_width) = self.compute_output_size(height, width);
 
@@ -200,8 +196,8 @@ impl AveragePooling2D {
 }
 
 impl super::Layer for AveragePooling2D {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        let input_shape = input.shape();
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        let input_shape = input.shape().to_vec();
 
         let (batch_size, height, width, channels, is_batched) = if input_shape.len() == 4 {
             (
@@ -220,19 +216,15 @@ impl super::Layer for AveragePooling2D {
             )));
         };
 
-        let input_4d = if is_batched {
-            input
-                .data()
-                .clone()
-                .into_shape_with_order((batch_size, height, width, channels))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+        let input_reshaped = if is_batched {
+            input.into_reshape(&[batch_size, height, width, channels])?
         } else {
-            input
-                .data()
-                .clone()
-                .into_shape_with_order((1, height, width, channels))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+            input.into_reshape(&[1, height, width, channels])?
         };
+
+        let input_4d = input_reshaped.data().to_owned()
+            .into_shape_with_order((batch_size, height, width, channels))
+            .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         let (out_height, out_width) = self.compute_output_size(height, width);
 

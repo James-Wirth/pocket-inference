@@ -17,8 +17,8 @@ impl Dropout {
 }
 
 impl super::Layer for Dropout {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        Ok(input.clone())
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        Ok(input)
     }
 
     fn name(&self) -> &str {

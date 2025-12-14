@@ -12,11 +12,11 @@ impl Flatten {
 }
 
 impl super::Layer for Flatten {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        let shape = input.shape();
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        let shape = input.shape().to_vec();
 
         if shape.is_empty() {
-            return Ok(input.clone());
+            return Ok(input);
         }
 
         let new_shape = if shape.len() > 1 {
@@ -27,7 +27,7 @@ impl super::Layer for Flatten {
             vec![shape.iter().product()]
         };
 
-        input.reshape(&new_shape)
+        input.into_reshape(&new_shape)
     }
 
     fn name(&self) -> &str {

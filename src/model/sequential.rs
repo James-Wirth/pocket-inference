@@ -43,7 +43,7 @@ impl Sequential {
 
         for (idx, layer) in self.layers.iter().enumerate() {
             current = layer
-                .forward(&current)
+                .into_forward(current)
                 .map_err(|e| Error::Layer(format!("Layer {} ({}): {}", idx, layer.name(), e)))?;
         }
 

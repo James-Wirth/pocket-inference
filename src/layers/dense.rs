@@ -44,9 +44,8 @@ impl Dense {
 }
 
 impl super::Layer for Dense {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        let input_data = input.data();
-        let input_shape = input_data.shape();
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        let input_shape = input.shape().to_vec();
 
         let (batch_size, features) = if input_shape.len() == 1 {
             (1, input_shape[0])
@@ -66,17 +65,15 @@ impl super::Layer for Dense {
             });
         }
 
-        let input_2d = if input_shape.len() == 1 {
-            input_data
-                .clone()
-                .into_shape_with_order((1, features))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+        let input_reshaped = if input_shape.len() == 1 {
+            input.into_reshape(&[1, features])?
         } else {
-            input_data
-                .clone()
-                .into_shape_with_order((batch_size, features))
-                .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?
+            input.into_reshape(&[batch_size, features])?
         };
+
+        let input_2d = input_reshaped.data().to_owned()
+            .into_shape_with_order((batch_size, features))
+            .map_err(|e| Error::Layer(format!("Reshape failed: {}", e)))?;
 
         let mut output = input_2d.dot(&self.weights);
 

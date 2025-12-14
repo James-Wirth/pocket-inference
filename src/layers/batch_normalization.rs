@@ -58,9 +58,8 @@ impl BatchNormalization {
 }
 
 impl super::Layer for BatchNormalization {
-    fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        let input_data = input.data();
-        let input_shape = input_data.shape();
+    fn into_forward(&self, input: Tensor) -> Result<Tensor> {
+        let input_shape = input.shape().to_vec();
 
         let num_features = input_shape[input_shape.len() - 1];
 
@@ -72,7 +71,7 @@ impl super::Layer for BatchNormalization {
             )));
         }
 
-        let mut output = input_data.clone();
+        let mut output = input.into_data();
 
         if let Some(data) = output.as_slice_mut() {
             let total_elements = data.len();
