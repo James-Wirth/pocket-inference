@@ -1,11 +1,19 @@
-# Pocket Inference
+<p align="center">
+  <img src="assets/logo.svg" alt="Pocket Inference" width="400">
+</p>
 
-[![CI](https://github.com/James-Wirth/pocket-inference/workflows/CI/badge.svg)](https://github.com/James-Wirth/pocket-inference/actions)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+---
 
-A lightweight Rust library for running inference on Keras Sequential models, designed for deployment on resource-constrained environments without the full TensorFlow/Keras stack.
+<h3 align="center">A lightweight Rust library for running Keras models without the TensorFlow stack.</h3>
 
-Binary size: **~450 KB**
+<p align="center">
+  <a href="https://github.com/James-Wirth/pocket-inference/actions/workflows/ci.yml"><img src="https://github.com/James-Wirth/pocket-inference/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg" alt="License"></a>
+</p>
+
+<p align="center">
+  <strong>Binary size: ~450 KB</strong> · Designed for resource-constrained environments
+</p>
 
 ## Features
 
