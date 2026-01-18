@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://github.com/James-Wirth/pocket-inference/actions/workflows/ci.yml"><img src="https://github.com/James-Wirth/pocket-inference/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg" alt="License"></a>
+  <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg" alt="License"></a>
 </p>
 
 <p align="center">
