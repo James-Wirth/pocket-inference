@@ -37,5 +37,5 @@ dev = [
 ]
 
 [tool.maturin]
-features = ["pyo3/extension-module", "python"]
+features = ["pyo3/extension-module", "pyo3/abi3-py37", "python"]
 module-name = "pocket_inference"
