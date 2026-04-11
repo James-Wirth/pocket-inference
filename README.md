@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Pocket Inference" width="400">
+  <img src="https://raw.githubusercontent.com/James-Wirth/pocket-inference/main/assets/logo.png" alt="Pocket Inference" width="400">
 </p>
 
 ---
