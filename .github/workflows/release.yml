@@ -40,27 +40,19 @@ jobs:
           path: dist
 
   build-macos:
-    name: Build wheels (macOS ${{ matrix.target }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-apple-darwin
-            runner: macos-13
-          - target: aarch64-apple-darwin
-            runner: macos-latest
+    name: Build wheels (macOS aarch64)
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: PyO3/maturin-action@v1
         with:
-          target: ${{ matrix.target }}
+          target: aarch64-apple-darwin
           args: --release --out dist --features python
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-macos-${{ matrix.target }}
+          name: wheels-macos-aarch64
           path: dist
 
   sdist:
