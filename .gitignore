@@ -30,6 +30,8 @@ wheels/
 venv/
 ENV/
 env/
+.venv/
+.venv-*/
 
 # IDEs
 .vscode/
