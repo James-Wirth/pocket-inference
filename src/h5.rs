@@ -475,6 +475,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires local Keras fixtures under examples/data/"]
     fn reads_simple_model_weights() {
         let bytes = load_weights_h5("examples/data/simple_model.keras");
         let r = H5Reader::open(&bytes).unwrap();
@@ -488,6 +489,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires local Keras fixtures under examples/data/"]
     fn reads_conv_model_weights() {
         let bytes = load_weights_h5("examples/data/conv_model.keras");
         let r = H5Reader::open(&bytes).unwrap();
@@ -497,6 +499,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires local Keras fixtures under examples/data/"]
     fn reads_batch_norm_model_weights() {
         let bytes = load_weights_h5("examples/data/batch_norm_model.keras");
         let r = H5Reader::open(&bytes).unwrap();
@@ -510,6 +513,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires local Keras fixtures under examples/data/"]
     fn missing_path_errors_cleanly() {
         let bytes = load_weights_h5("examples/data/simple_model.keras");
         let r = H5Reader::open(&bytes).unwrap();
