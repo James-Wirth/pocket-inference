@@ -1,12 +1,13 @@
 use approx::assert_abs_diff_eq;
-use ndarray::array;
+use ndarray::{array, Array2, Array4};
 use pocket_inference::layers::{
+    conv2d::Conv2D,
     dense::Dense,
     flatten::Flatten,
     pooling::{AveragePooling2D, MaxPooling2D, Padding},
     Layer,
 };
-use pocket_inference::{activations::Activation, Tensor};
+use pocket_inference::{activations::Activation, Sequential, Tensor};
 
 #[test]
 fn test_dense_forward_single_input() {
@@ -210,11 +211,10 @@ fn test_dense_output_shape() {
 fn test_flatten_output_shape() {
     let layer = Flatten::new("test".to_string());
 
-    let shape = layer.output_shape(&[2, 3, 4]).unwrap();
-    assert_eq!(shape, vec![2, 12]);
-
-    let shape = layer.output_shape(&[5, 5, 3]).unwrap();
-    assert_eq!(shape, vec![5, 15]);
+    assert_eq!(layer.output_shape(&[2, 3, 4]).unwrap(), vec![24]);
+    assert_eq!(layer.output_shape(&[5, 5, 32]).unwrap(), vec![800]);
+    assert_eq!(layer.output_shape(&[10]).unwrap(), vec![10]);
+    assert_eq!(layer.output_shape(&[]).unwrap(), vec![1]);
 }
 
 #[test]
@@ -226,4 +226,62 @@ fn test_maxpool_output_shape() {
 
     let shape = layer.output_shape(&[8, 4, 4, 2]).unwrap();
     assert_eq!(shape, vec![8, 2, 2, 2]);
+}
+
+#[test]
+fn test_mnist_chain_output_shape() {
+    let mut model = Sequential::new("mnist".to_string());
+
+    let conv1_w = Array4::<f32>::zeros((3, 3, 1, 16));
+    let conv1 = Conv2D::new(
+        "conv2d".to_string(),
+        16,
+        (3, 3),
+        (1, 1),
+        Padding::Valid,
+        conv1_w,
+        None,
+        Activation::ReLU,
+    )
+    .unwrap();
+    model.add(Box::new(conv1));
+    model.add(Box::new(MaxPooling2D::new(
+        "max_pooling2d".to_string(),
+        (2, 2),
+        None,
+        Padding::Valid,
+    )));
+
+    let conv2_w = Array4::<f32>::zeros((3, 3, 16, 32));
+    let conv2 = Conv2D::new(
+        "conv2d_1".to_string(),
+        32,
+        (3, 3),
+        (1, 1),
+        Padding::Valid,
+        conv2_w,
+        None,
+        Activation::ReLU,
+    )
+    .unwrap();
+    model.add(Box::new(conv2));
+    model.add(Box::new(MaxPooling2D::new(
+        "max_pooling2d_1".to_string(),
+        (2, 2),
+        None,
+        Padding::Valid,
+    )));
+
+    model.add(Box::new(Flatten::new("flatten".to_string())));
+
+    let dense1_w = Array2::<f32>::zeros((800, 64));
+    let dense1 = Dense::new("dense".to_string(), dense1_w, None, Activation::ReLU).unwrap();
+    model.add(Box::new(dense1));
+
+    let dense2_w = Array2::<f32>::zeros((64, 10));
+    let dense2 = Dense::new("dense_1".to_string(), dense2_w, None, Activation::Linear).unwrap();
+    model.add(Box::new(dense2));
+
+    let shape = model.output_shape(&[28, 28, 1]).unwrap();
+    assert_eq!(shape, vec![10]);
 }

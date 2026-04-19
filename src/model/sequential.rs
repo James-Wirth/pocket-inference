@@ -67,17 +67,25 @@ impl Sequential {
         s.push_str("Layer (type)                 Output Shape              \n");
         s.push_str("=================================================================\n");
 
-        let mut current_shape = self.input_shape.clone().unwrap_or_default();
+        let mut current_shape: Option<Vec<usize>> = self.input_shape.clone();
 
         for layer in &self.layers {
-            if !current_shape.is_empty() {
-                current_shape = match layer.output_shape(&current_shape) {
-                    Ok(shape) => shape,
-                    Err(_) => vec![],
-                };
-            }
+            let row = match &current_shape {
+                None => String::new(),
+                Some(shape) => match layer.output_shape(shape) {
+                    Ok(new_shape) => {
+                        let rendered = format!("{:?}", new_shape);
+                        current_shape = Some(new_shape);
+                        rendered
+                    }
+                    Err(e) => {
+                        current_shape = None;
+                        format!("[shape inference failed: {}]", e)
+                    }
+                },
+            };
 
-            s.push_str(&format!("{:28} {:?}\n", layer.name(), current_shape));
+            s.push_str(&format!("{:28} {}\n", layer.name(), row));
         }
 
         s.push_str("=================================================================\n");

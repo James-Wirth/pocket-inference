@@ -38,14 +38,7 @@ impl super::Layer for Flatten {
         if input_shape.is_empty() {
             return Ok(vec![1]);
         }
-
-        if input_shape.len() > 1 {
-            let batch_size = input_shape[0];
-            let flattened_size: usize = input_shape[1..].iter().product();
-            Ok(vec![batch_size, flattened_size])
-        } else {
-            Ok(vec![input_shape.iter().product()])
-        }
+        Ok(vec![input_shape.iter().product()])
     }
 }
 
