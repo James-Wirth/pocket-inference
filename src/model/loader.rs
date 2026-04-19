@@ -1,13 +1,13 @@
 use crate::{
     activations::Activation,
+    h5::H5Reader as H5File,
     layers::{pooling::Padding, *},
     Error, Result,
 };
-use hdf5::File as H5File;
 use ndarray::Array;
 use serde_json::Value;
 use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::{BufReader, Read};
 use zip::ZipArchive;
 
 use super::Sequential;
@@ -29,9 +29,9 @@ pub fn load_from_keras(path: &str) -> Result<Sequential> {
         .as_array()
         .ok_or_else(|| Error::ModelLoad("No layers found in config".to_string()))?;
 
-    let _weights_temp = extract_weights_h5(&mut archive)?;
+    let weights_bytes = extract_weights_h5(&mut archive)?;
 
-    let h5_file = H5File::open(_weights_temp.path())?;
+    let h5_file = H5File::open(&weights_bytes)?;
 
     let mut dense_layer_idx = 0;
     let mut conv_layer_idx = 0;
@@ -118,20 +118,13 @@ fn read_config(archive: &mut ZipArchive<BufReader<File>>) -> Result<Value> {
     Ok(config)
 }
 
-fn extract_weights_h5(
-    archive: &mut ZipArchive<BufReader<File>>,
-) -> Result<tempfile::NamedTempFile> {
+fn extract_weights_h5(archive: &mut ZipArchive<BufReader<File>>) -> Result<Vec<u8>> {
     let mut weights_zip = archive.by_name("model.weights.h5").map_err(|e| {
         Error::ModelLoad(format!("model.weights.h5 not found in .keras file: {}", e))
     })?;
-
-    let mut temp_file = tempfile::NamedTempFile::new()?;
-    let mut buffer = Vec::new();
+    let mut buffer = Vec::with_capacity(weights_zip.size() as usize);
     weights_zip.read_to_end(&mut buffer)?;
-    temp_file.write_all(&buffer)?;
-    temp_file.flush()?;
-
-    Ok(temp_file)
+    Ok(buffer)
 }
 
 fn load_dense_layer(

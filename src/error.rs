@@ -24,7 +24,7 @@ pub enum Error {
     Zip(#[from] zip::result::ZipError),
 
     #[error("HDF5 error: {0}")]
-    Hdf5(#[from] hdf5::Error),
+    Hdf5(#[from] crate::h5::H5Error),
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),

@@ -15,6 +15,7 @@
 pub mod activations;
 mod conv2d_impl;
 pub mod error;
+pub mod h5;
 pub mod layers;
 pub mod model;
 pub mod tensor;
